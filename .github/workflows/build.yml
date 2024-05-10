@@ -35,6 +35,8 @@ jobs:
           uname -a
       - name: Initialise micro:bit MicroPython submodules
         run: git -C micropython-microbit-v2 submodule update --init
+      - name: Apply MicroPython patch
+        run: git -C micropython-microbit-v2 apply ../micropython-microbit-v2.patch
       - name: Build mpy-cross
         run: make -C micropython-microbit-v2/lib/micropython/mpy-cross -j2
       - name: Build MicroPython with C++ module
