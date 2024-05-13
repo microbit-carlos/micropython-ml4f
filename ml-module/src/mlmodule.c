@@ -1,42 +1,22 @@
-#include <py/objstr.h>
+#include <py/runtime.h>
+#include <ml4f.h>
+#include "mlmodel.h"
 
-#include "ml4f.h"
-#include "model_example.h"
+// Flag to control usage of model included in model_example.h/c
+bool USE_BUILT_IN_MODULE = false;
 
-float* ml4f_invoke_example_model(const float *input, const int len) {
-    static float out[ml4f_model_example_num_labels];
-    int r = ml4f_full_invoke((ml4f_header_t *)ml4f_model_example, input, out);
-    if (r != 0) {
-        return NULL;
+mp_obj_t internal_model_func(size_t n_args, const mp_obj_t *args) {
+    if (n_args == 0) {
+        return mp_obj_new_bool(USE_BUILT_IN_MODULE);
     }
-    return (float *)out;
+    bool use_internal_model = mp_obj_is_true(args[0]);
+    USE_BUILT_IN_MODULE = use_internal_model;
+    return mp_obj_new_bool(USE_BUILT_IN_MODULE);
 }
+static MP_DEFINE_CONST_FUN_OBJ_VAR(internal_model_func_obj, 0, internal_model_func);
 
-// Here we implement the function using C++ code, but since it's
-// declaration has to be compatible with C everything goes in extern "C" scope.
-mp_obj_t cppfunc(mp_obj_t a_obj, mp_obj_t b_obj) {
-    // The following no-ops are just here to verify the static assertions used in
-    // the public API all compile with C++.
-    MP_STATIC_ASSERT_STR_ARRAY_COMPATIBLE;
-    if (mp_obj_is_type(a_obj, &mp_type_BaseException)) {
-    }
-
-    // Prove we have (at least) C++11 features.
-    const int a = mp_obj_get_int(a_obj);
-    const int b = mp_obj_get_int(b_obj);
-    const mp_obj_t sum = mp_obj_new_int(a + b);
-    // Prove we're being scanned for QSTRs.
-    mp_obj_t tup[] = {sum, MP_ROM_QSTR(MP_QSTR_hellocpp)};
-    return mp_obj_new_tuple(2, tup);
-}
-// Define a Python reference to the function we'll make available.
-// See example.cpp for the definition.
-static MP_DEFINE_CONST_FUN_OBJ_2(cppfunc_obj, cppfunc);
 
 mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
-    // The following no-ops are just here to verify the static assertions used in
-    // the public API all compile with C++.
-    MP_STATIC_ASSERT_STR_ARRAY_COMPATIBLE;
     if (!mp_obj_is_type(x_y_z_obj, &mp_type_list)) {
         return mp_const_none;
     }
@@ -56,7 +36,7 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
         x_y_z[i] = (float)(mp_obj_get_int(items[i]) / 1000.0);
     }
 
-    float* out_values = ml4f_invoke_example_model(x_y_z, ml4f_model_example_input_num_elements);
+    float* out_values = invoke_example_model(x_y_z, ml4f_model_example_input_num_elements);
     if (out_values == NULL) {
         return mp_const_none;
     }
@@ -75,6 +55,27 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(predict_func_obj, predict_func);
 
+
+// Init state is stored on mp_state so that it is cleared on soft reset.
+// TODO: This doesn't seem to be working.
+MP_REGISTER_ROOT_POINTER(int ml_initialised);
+
+static mp_obj_t ml___init__(void) {
+    if (!MP_STATE_VM(ml_initialised)) {
+        // __init__ for builtins is called each time the module is imported,
+        //   so ensure that initialisation only happens once.
+        MP_STATE_VM(ml_initialised) = true;
+        mp_printf(&mp_plat_print, "ml.__init_ run\n");
+
+        USE_BUILT_IN_MODULE = true;
+    } else {
+        mp_printf(&mp_plat_print, "ml.__init_ already initialised\n");
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(ml___init___obj, ml___init__);
+
+
 // Define all attributes of the module.
 // Table entries are key/value pairs of the attribute name (a string)
 // and the MicroPython object reference.
@@ -82,7 +83,8 @@ static MP_DEFINE_CONST_FUN_OBJ_1(predict_func_obj, predict_func);
 // optimized to word-sized integers by the build system (interned strings).
 static const mp_rom_map_elem_t ml_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ml) },
-    { MP_ROM_QSTR(MP_QSTR_cppfunc), MP_ROM_PTR(&cppfunc_obj) },
+    { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&ml___init___obj) },
+    { MP_ROM_QSTR(MP_QSTR_internal_model), MP_ROM_PTR(&internal_model_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_predict), MP_ROM_PTR(&predict_func_obj) },
 };
 static MP_DEFINE_CONST_DICT(ml_module_globals, ml_module_globals_table);
