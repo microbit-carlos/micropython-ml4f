@@ -1,5 +1,4 @@
 #include <py/runtime.h>
-#include <ml4f.h>
 #include "mlmodel.h"
 
 // Flag to control usage of model included in model_example.h/c
@@ -17,37 +16,43 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR(internal_model_func_obj, 0, internal_model_fu
 
 
 mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
+    // TODO: Expand the types of input accepted
     if (!mp_obj_is_type(x_y_z_obj, &mp_type_list)) {
-        return mp_const_none;
+        mp_raise_ValueError(MP_ERROR_TEXT("Input data must be a list."));
+    }
+    size_t input_len;
+    mp_obj_t *input_items;
+    mp_obj_list_get(x_y_z_obj, &input_len, &input_items);
+
+    if (!is_model_present()) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Cannot find model in flash."));
     }
 
-    // Get the list items and length
-    size_t len;
-    mp_obj_t *items;
-    mp_obj_list_get(x_y_z_obj, &len, &items);
+    const size_t model_input_num = get_model_input_num();
+    const size_t model_label_num = get_model_label_num();
 
-    if (len != ml4f_model_example_input_num_elements) {
-        return mp_const_none;
+    if (input_len != model_input_num) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Input data number of elements invalid."));
     }
 
     // Convert the values from int milli-g to float g
-    static float x_y_z[ml4f_model_example_input_num_elements];
-    for (int i = 0; i < ml4f_model_example_input_num_elements; i++) {
-        x_y_z[i] = (float)(mp_obj_get_int(items[i]) / 1000.0);
+    float x_y_z[model_input_num];
+    for (int i = 0; i < model_input_num; i++) {
+        x_y_z[i] = (float)(mp_obj_get_int(input_items[i]) / 1000.0);
     }
 
-    float* out_values = invoke_example_model(x_y_z, ml4f_model_example_input_num_elements);
+    float* out_values = model_predict(x_y_z);
     if (out_values == NULL) {
         return mp_const_none;
     }
-    int max_index = ml4f_argmax(out_values, ml4f_model_example_num_labels);
+    int max_index = calc_arg_max(out_values, model_label_num);
 
     // Create a tuple with each label prediction value
-    mp_obj_t tup_values[ml4f_model_example_num_labels];
-    for (int i = 0; i < ml4f_model_example_num_labels; i++) {
+    mp_obj_t tup_values[model_label_num];
+    for (int i = 0; i < model_label_num; i++) {
         tup_values[i] = mp_obj_new_float(out_values[i]);
     }
-    mp_obj_t tuple_values = mp_obj_new_tuple(ml4f_model_example_num_labels, tup_values);
+    mp_obj_t tuple_values = mp_obj_new_tuple(model_label_num, tup_values);
 
     // And a tuple with the index of the max value and the tuple of predictions
     mp_obj_t tup_max_values[] = { mp_obj_new_int(max_index), tuple_values };

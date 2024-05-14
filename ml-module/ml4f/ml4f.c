@@ -93,7 +93,7 @@ uint32_t ml4f_shape_size(const uint32_t *shape, uint32_t type) {
     return ml4f_shape_elements(shape) << 2;
 }
 
-int ml4f_argmax(float *data, uint32_t size) {
+int ml4f_argmax(const float *data, uint32_t size) {
     if (size == 0)
         return -1;
     float max = data[0];
