@@ -6,7 +6,7 @@ An experiment to integrate ML4F into MicroPython.
 ## Build instructions
 
 Clone this repository and initialise the git submodules (recursive submodule
-int will unnecessarily initialise all submodules from all MicroPython ports):
+init will unnecessarily initialise all submodules from all MicroPython ports):
 ```
 git submodule update --init
 git -C micropython-microbit-v2 submodule update --init

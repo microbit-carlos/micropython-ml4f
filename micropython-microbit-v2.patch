@@ -1,22 +1,66 @@
-diff --git a/src/Makefile b/src/Makefile
-index 70bb10c..cb1a185 100644
---- a/src/Makefile
-+++ b/src/Makefile
-@@ -33,13 +33,13 @@ codal_cmake:
- # Build the codal app and make the final HEX file
- codal_build: libmicropython
- 	$(call CODAL_PATCH)
- 	make -C $(BUILD)
- 	$(call CODAL_CLEAN)
- 	arm-none-eabi-size $(CODAL_BUILD)/MICROBIT
--	$(PYTHON) addlayouttable.py $(SRC_HEX) $(SRC_MAP) -o $(DEST_HEX)
-+#	$(PYTHON) addlayouttable.py $(SRC_HEX) $(SRC_MAP) -o $(DEST_HEX)
+diff --git a/src/addlayouttable.py b/src/addlayouttable.py
+index 4e7fe1e..96a27c5 100755
+--- a/src/addlayouttable.py
++++ b/src/addlayouttable.py
+@@ -193,13 +193,14 @@ def main():
+             "microbit_version_string",
+         ]
+     }
+     parse_map_file(args.mapfile[0], symbols)
  
- # Build the MicroPython component
- libmicropython: $(CODAL_LIBRARIES) $(BUILD)
- 	$(call CODAL_CLEAN)
- 	$(MAKE) -C codal_port
+     # Get the required symbol addresses.
+-    sd_start = symbols["_binary_softdevice_bin_start"]
++    # SoftDevice might not be present if codal.json is configured with DEVICE_BLE: 0
++    sd_start = symbols["_binary_softdevice_bin_start"] or 0
+     sd_end = symbols["__isr_vector"]
+     mp_start = symbols["__isr_vector"]
+     data_len = symbols["__data_end__"] - symbols["__data_start__"]
+     mp_end = symbols["__etext"] + data_len
+     mp_version = symbols["microbit_version_string"]
+     fs_start = symbols["_fs_start"]
+@@ -209,33 +210,40 @@ def main():
+     layout = FlashLayout()
+     layout.add_region(1, sd_start, sd_end - sd_start, FlashLayout.REGION_HASH_NONE)
+     layout.add_region(
+         2, mp_start, mp_end - mp_start, FlashLayout.REGION_HASH_PTR, mp_version
+     )
+     layout.add_region(3, fs_start, fs_end - fs_start, FlashLayout.REGION_HASH_NONE)
+-    layout.finalise()
  
+     # Compute layout address.
+     layout_addr = (
+         ((mp_end >> NRF_PAGE_SIZE_LOG2) << NRF_PAGE_SIZE_LOG2)
+         + NRF_PAGE_SIZE
+         - len(layout.data)
+     )
+     if layout_addr < mp_end:
+         layout_addr += NRF_PAGE_SIZE
+     if layout_addr >= fs_start:
+         print("ERROR: Flash layout information overlaps with filesystem")
+         sys.exit(1)
++    layout_end = layout_addr + len(layout.data)
++
++    # Add the ML model region between the layout table and the filesystem.
++    ml_start = layout_end
++    ml_end = fs_start
++    layout.add_region(4, ml_start, ml_end - ml_start, FlashLayout.REGION_HASH_NONE)
++    layout.finalise()
+ 
+     # Print information.
+     if args.output is not sys.stdout:
+         fmt = "{:13} 0x{:05x}..0x{:05x}  {:6} bytes"
+         print(fmt.format("SoftDevice", sd_start, sd_end, sd_end - sd_start))
+         print(fmt.format("MicroPython", mp_start, mp_end, mp_end - mp_start))
+-        print(fmt.format("Layout table", layout_addr, layout_addr + len(layout.data), len(layout.data)))
++        print(fmt.format("Layout table", layout_addr, layout_end, len(layout.data)))
+         print(fmt.format("Filesystem", fs_start, fs_end, fs_end - fs_start))
++        print(fmt.format("ML model", ml_start, ml_end,  ml_end - ml_start))
+ 
+     # Output the new firmware as a hex file.
+     output_firmware(args.output, firmware, layout_addr, layout.data)
+ 
+ 
+ if __name__ == "__main__":
 diff --git a/src/codal_app/codal.json b/src/codal_app/codal.json
 index f1d9977..25fa292 100644
 --- a/src/codal_app/codal.json
@@ -35,3 +79,13 @@ index f1d9977..25fa292 100644
          "MICROBIT_BLE_PARTIAL_FLASHING" : 1,
          "MICROBIT_BLE_SECURITY_MODE": 2,
          "MICROBIT_BLE_UTILITY_SERVICE_PAIRING": 1,
+diff --git a/src/codal_port/filesystem.ld b/src/codal_port/filesystem.ld
+index 4e262c8..cfd4a29 100644
+--- a/src/codal_port/filesystem.ld
++++ b/src/codal_port/filesystem.ld
+@@ -1,3 +1,3 @@
+ /* 24k filesystem */
+-_fs_start = 0x6D000;
+-_fs_end = 0x73000;
++_fs_start = 0x7A000;
++_fs_end = 0x80000;
