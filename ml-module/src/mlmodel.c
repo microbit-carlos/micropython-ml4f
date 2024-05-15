@@ -105,6 +105,14 @@ bool is_model_present(void) {
     return model_header != NULL;
 }
 
+size_t get_input_length(void) {
+    ml4f_header_t *ml4f_model = get_ml4f_model();
+    if (ml4f_model == NULL) {
+        return 0;
+    }
+    return ml4f_shape_elements(ml4f_input_shape(ml4f_model));
+}
+
 size_t get_model_label_num(void) {
     ml_model_header_t *model_header = get_model_header();
     return (model_header != NULL) ? model_header->number_of_labels : 0;

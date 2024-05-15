@@ -12,8 +12,8 @@ typedef __PACKED_STRUCT ml_model_header_t {
     uint32_t magic0;
     uint16_t header_size;      // Size of this header + all label strings
     uint16_t model_offset;     // header_size + padding to 4 bytes
-    uint8_t number_of_labels;  // Only 255 labels supported
     uint8_t reserved[7];
+    uint8_t number_of_labels;  // Only 255 labels supported
     char labels[];             // Mutiple null-terminated strings, as many as number_of_labels
 } ml_model_header_t;
 
@@ -29,9 +29,11 @@ typedef struct ml_prediction_s {
     float *predictions;
 } ml_prediction_t;
 
+
 bool get_use_built_in_model(void);
 void set_use_built_in_model(bool use);
 bool is_model_present(void);
+size_t get_input_length(void);
 size_t get_model_label_num(void);
 ml_labels_t* get_model_labels(void);
 size_t get_model_input_num(void);

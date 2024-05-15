@@ -3,11 +3,11 @@ import time
 
 import ml
 
-SAMPLES_LEN = 250
-TOTAL_SAMPLES = SAMPLES_LEN * 3
+TOTAL_SAMPLES = ml.get_input_length()
 acc_x_y_z = [0] * TOTAL_SAMPLES
 
 print("Model labels: {}".format(ml.get_labels()))
+print("Input size: {}".format(TOTAL_SAMPLES))
 
 i = 0
 while True:

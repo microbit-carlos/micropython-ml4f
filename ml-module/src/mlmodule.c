@@ -10,6 +10,10 @@ mp_obj_t internal_model_func(size_t n_args, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(internal_model_func_obj, 0, internal_model_func);
 
+mp_obj_t get_input_length_func(void) {
+    return mp_obj_new_int(get_input_length());
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(get_input_length_func_obj, get_input_length_func);
 
 mp_obj_t get_labels_func(void) {
     ml_labels_t* labels = get_model_labels();
@@ -106,6 +110,7 @@ static const mp_rom_map_elem_t ml_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ml) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&ml___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_internal_model), MP_ROM_PTR(&internal_model_func_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_input_length), MP_ROM_PTR(&get_input_length_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_labels), MP_ROM_PTR(&get_labels_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_predict), MP_ROM_PTR(&predict_func_obj) },
 };
