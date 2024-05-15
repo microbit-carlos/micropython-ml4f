@@ -17,19 +17,22 @@ typedef __PACKED_STRUCT ml_model_header_t {
     char labels[];             // Mutiple null-terminated strings, as many as number_of_labels
 } ml_model_header_t;
 
-typedef struct ml_label_prediction_s {
-    float prediction;
-    char* label;
-} ml_label_prediction_t;
+typedef struct ml_labels_s {
+    size_t num_labels;
+    const char **labels;
+} ml_labels_t;
 
 typedef struct ml_prediction_s {
     size_t max_index;
     size_t num_labels;
-    ml_label_prediction_t predictions[];
+    const char **labels;
+    float *predictions;
 } ml_prediction_t;
 
-bool use_built_in_model(bool use);
+bool get_use_built_in_model(void);
+void set_use_built_in_model(bool use);
 bool is_model_present(void);
 size_t get_model_label_num(void);
+ml_labels_t* get_model_labels(void);
 size_t get_model_input_num(void);
 ml_prediction_t* model_predict(const float *input);

@@ -1,6 +1,33 @@
 #include "model_example.h"
 
-const unsigned int ml4f_model_example[13852] = {
+#define ml4f_model_example_header_len   52
+#define ml4f_model_example_size         13852
+#define ml4f_full_model_size            (ml4f_model_example_header_len + ml4f_model_example_size)
+
+
+// This is a struct representation of the header included at the beginning of model_example
+/* const ml_model_header_t ml4f_model_example_header = {
+    .magic0 = MODEL_LABELS_MAGIC0,
+    .header_size = 0x31,        // 49
+    .model_offset = 0x34,       // 52
+    .number_of_labels = 0x04,
+    .reserved = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    // 33 bytes
+    .labels = {
+        "Jumping\0"
+        "Running\0"
+        "Standing\0"
+        "Walking\0\0\0"
+    }
+}; */
+
+const unsigned int model_example[ml4f_full_model_size] = {
+    // Manually converted ml4f_model_example_header
+    0x4D444C42, 0x00340031, 0x00000004, 0x00000000,
+    0x706D754A, 0x00676E69, 0x6E6E7552, 0x00676E69,
+    0x6E617453, 0x676E6964, 0x6C615700, 0x676E696B,
+    0x00000000,
+    // Original ML4F model from this point forward
     0x30470f62, 0x46344c4d, 0x00000054, 0x0000d864, 0x00001874, 0x00000000, 0x00000000, 0x00002ec8, 
     0x00000008, 0x00000001, 0x00000008, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 
     0x000000fa, 0x00000003, 0x00000000, 0x00000004, 0x00000000, 0x5ff0e92d, 0x6901460f, 0x60391809, 

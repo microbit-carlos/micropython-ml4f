@@ -1,23 +1,37 @@
 #include <py/runtime.h>
 #include "mlmodel.h"
 
-// Flag to control usage of model included in model_example.h/c
-bool USE_BUILT_IN_MODULE = false;
-
 mp_obj_t internal_model_func(size_t n_args, const mp_obj_t *args) {
-    if (n_args == 0) {
-        return mp_obj_new_bool(USE_BUILT_IN_MODULE);
+    if (n_args == 1) {
+        bool use_internal_model = !!mp_obj_get_int(args[0]);
+        set_use_built_in_model(use_internal_model);
     }
-    bool use_internal_model = mp_obj_is_true(args[0]);
-    USE_BUILT_IN_MODULE = use_internal_model;
-    return mp_obj_new_bool(USE_BUILT_IN_MODULE);
+    return mp_obj_new_bool(get_use_built_in_model());
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(internal_model_func_obj, 0, internal_model_func);
+
+
+mp_obj_t get_labels_func(void) {
+    ml_labels_t* labels = get_model_labels();
+    if (labels == NULL) {
+        return mp_const_none;
+    }
+    mp_obj_t tup_labels[labels->num_labels];
+    for (int i = 0; i < labels->num_labels; i++) {
+        tup_labels[i] = mp_obj_new_str(
+            labels->labels[i],
+            strlen(labels->labels[i])
+        );
+    }
+    return mp_obj_new_tuple(labels->num_labels, tup_labels);
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(get_labels_func_obj, get_labels_func);
 
 
 mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
     // TODO: Expand the types of input accepted
     if (!mp_obj_is_type(x_y_z_obj, &mp_type_list)) {
+        // TODO: Use a better exception type
         mp_raise_ValueError(MP_ERROR_TEXT("Input data must be a list."));
     }
     size_t input_len;
@@ -29,7 +43,6 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
     }
 
     const size_t model_input_num = get_model_input_num();
-    const size_t model_label_num = get_model_label_num();
 
     if (input_len != model_input_num) {
         mp_raise_ValueError(MP_ERROR_TEXT("Input data number of elements invalid."));
@@ -47,15 +60,15 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
     }
 
     // Create a tuple with tuples of (label, prediction_value)
-    mp_obj_t tup_values[model_label_num];
-    for (int i = 0; i < model_label_num; i++) {
+    mp_obj_t tup_values[predictions->num_labels];
+    for (int i = 0; i < predictions->num_labels; i++) {
         tup_values[i] = mp_obj_new_tuple(2, (mp_obj_t[]){
-            mp_obj_new_str(predictions->predictions[i].label,
-                            strlen(predictions->predictions[i].label)),
-            mp_obj_new_float(predictions->predictions[i].prediction),
+            mp_obj_new_str(predictions->labels[i],
+                           strlen(predictions->labels[i])),
+            mp_obj_new_float(predictions->predictions[i]),
         });
     }
-    mp_obj_t tuple_values = mp_obj_new_tuple(model_label_num, tup_values);
+    mp_obj_t tuple_values = mp_obj_new_tuple(predictions->num_labels, tup_values);
 
     // And a tuple with the index of the max value and the tuple of labels+predictions
     return mp_obj_new_tuple(2, (mp_obj_t[]){
@@ -75,9 +88,7 @@ static mp_obj_t ml___init__(void) {
         // __init__ for builtins is called each time the module is imported,
         //   so ensure that initialisation only happens once.
         MP_STATE_VM(ml_initialised) = true;
-        mp_printf(&mp_plat_print, "ml.__init_ run\n");
-
-        USE_BUILT_IN_MODULE = true;
+        mp_printf(&mp_plat_print, "ml.__init_ called\n");
     } else {
         mp_printf(&mp_plat_print, "ml.__init_ already initialised\n");
     }
@@ -95,6 +106,7 @@ static const mp_rom_map_elem_t ml_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ml) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&ml___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_internal_model), MP_ROM_PTR(&internal_model_func_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_labels), MP_ROM_PTR(&get_labels_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_predict), MP_ROM_PTR(&predict_func_obj) },
 };
 static MP_DEFINE_CONST_DICT(ml_module_globals, ml_module_globals_table);

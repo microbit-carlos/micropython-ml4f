@@ -7,6 +7,8 @@ SAMPLES_LEN = 250
 TOTAL_SAMPLES = SAMPLES_LEN * 3
 acc_x_y_z = [0] * TOTAL_SAMPLES
 
+print("Model labels: {}".format(ml.get_labels()))
+
 i = 0
 while True:
     acc_x_y_z[i + 0] = accelerometer.get_x()
@@ -24,4 +26,12 @@ while True:
         else:
             print("t[{}] {}".format(time.ticks_ms() - t, result))
         i = 0
+    if button_a.is_pressed():
+        print("Use build-in model")
+        ml.internal_model(True)
+        sleep(500)
+    if button_b.is_pressed():
+        print("Use flash model")
+        ml.internal_model(False)
+        sleep(500)
     sleep(20)
