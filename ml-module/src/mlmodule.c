@@ -41,22 +41,27 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
         x_y_z[i] = (float)(mp_obj_get_int(input_items[i]) / 1000.0);
     }
 
-    float* out_values = model_predict(x_y_z);
-    if (out_values == NULL) {
+    ml_prediction_t* predictions = model_predict(x_y_z);
+    if (predictions == NULL) {
         return mp_const_none;
     }
-    int max_index = calc_arg_max(out_values, model_label_num);
 
-    // Create a tuple with each label prediction value
+    // Create a tuple with tuples of (label, prediction_value)
     mp_obj_t tup_values[model_label_num];
     for (int i = 0; i < model_label_num; i++) {
-        tup_values[i] = mp_obj_new_float(out_values[i]);
+        tup_values[i] = mp_obj_new_tuple(2, (mp_obj_t[]){
+            mp_obj_new_str(predictions->predictions[i].label,
+                            strlen(predictions->predictions[i].label)),
+            mp_obj_new_float(predictions->predictions[i].prediction),
+        });
     }
     mp_obj_t tuple_values = mp_obj_new_tuple(model_label_num, tup_values);
 
-    // And a tuple with the index of the max value and the tuple of predictions
-    mp_obj_t tup_max_values[] = { mp_obj_new_int(max_index), tuple_values };
-    return mp_obj_new_tuple(2, tup_max_values);
+    // And a tuple with the index of the max value and the tuple of labels+predictions
+    return mp_obj_new_tuple(2, (mp_obj_t[]){
+        mp_obj_new_int(predictions->max_index),
+        tuple_values,
+    });
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(predict_func_obj, predict_func);
 

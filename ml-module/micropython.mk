@@ -7,6 +7,7 @@ SRC_USERMOD += \
 	$(CPPEXAMPLE_MOD_DIR)/src/mlmodule.c
 
 CFLAGS_USERMOD += \
+	-I$(CPPEXAMPLE_MOD_DIR)/../micropython-microbit-v2/lib/codal/libraries/codal-nrf52/inc/cmsis/ \
 	-I$(CPPEXAMPLE_MOD_DIR)/ml4f \
 	-I$(CPPEXAMPLE_MOD_DIR)/model-example \
 	-I$(CPPEXAMPLE_MOD_DIR)/src

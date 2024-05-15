@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <ml4f.h>
 #include <model_example.h>
 #include "mlmodel.h"
@@ -56,20 +57,53 @@ size_t get_model_input_num() {
     return USE_BUILT_IN ? ml4f_model_example_input_num_elements : 0;
 }
 
-float* model_predict(const float *input) {
+ml_prediction_t* model_predict(const float *input) {
     if (!USE_BUILT_IN) {
         (void)get_model_header();
         return NULL;
     }
 
-    static float out[ml4f_model_example_num_labels];
-    int r = ml4f_full_invoke((ml4f_header_t *)ml4f_model_example, input, out);
+    typedef struct out_s {
+        size_t len;
+        float* values;
+    } out_t;
+
+    static out_t out = {
+        .len = 0,
+        .values = NULL
+    };
+    static ml_prediction_t predictions = {
+        .max_index = 0,
+        .num_labels = ml4f_model_example_num_labels,
+        .predictions = {
+            { .prediction = 0.0, .label = "Jumping" },
+            { .prediction = 0.0, .label = "Running" },
+            { .prediction = 0.0, .label = "Standing" },
+            { .prediction = 0.0, .label = "Walking" },
+        }
+    };
+
+    size_t label_num = get_model_label_num();
+
+    // The model shouldn't really change (only during testing while we built-in
+    // one), so this should be a one-time allocation.
+    if (out.len != label_num || out.values == NULL) {
+        if (out.values != NULL) {
+            free(out.values);
+        }
+        out.len = label_num;
+        out.values = (float *)malloc(out.len * sizeof(float));
+    }
+
+    int r = ml4f_full_invoke((ml4f_header_t *)ml4f_model_example, input, out.values);
     if (r != 0) {
         return NULL;
     }
-    return (float *)out;
-}
 
-size_t calc_arg_max(const float *values, size_t num_elements) {
-    return ml4f_argmax(values, (uint32_t)num_elements);
+    for (int i = 0; i < out.len; i++) {
+        predictions.predictions[i].prediction = out.values[i];
+    }
+    predictions.max_index = ml4f_argmax(out.values, out.len);
+
+    return &predictions;
 }
