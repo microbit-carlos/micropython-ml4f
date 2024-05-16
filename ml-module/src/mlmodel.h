@@ -2,13 +2,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <cmsis_compiler.h>
 #include <ml4f.h>
 
-// ASCII for "MLAB"
-#define MODEL_LABELS_MAGIC0 0x4D444C42
+// ASCII for "MODL"
+#define MODEL_HEADER_MAGIC0 0x4D4F444C
 
-typedef __PACKED_STRUCT ml_model_header_t {
+typedef struct ml_model_header_t {
     uint32_t magic0;
     uint16_t header_size;      // Size of this header + all label strings
     uint16_t model_offset;     // header_size + padding to 4 bytes
@@ -29,12 +28,43 @@ typedef struct ml_prediction_s {
     float *predictions;
 } ml_prediction_t;
 
+/**
+ * @brief Select the Built-in model or the model added to a flash region.
+ * 
+ * Built-in model is compiled with MicroPython as an array of bytes.
+ * The model added to a flash region is added by the coding editors.
+ *
+ * @param use True to use the built-in model, False to use the flash section.
+ */
+void mbml_useBuiltInModel(bool use);
 
-bool get_use_built_in_model(void);
-void set_use_built_in_model(bool use);
-bool is_model_present(void);
-size_t get_input_length(void);
-size_t get_model_label_num(void);
-ml_labels_t* get_model_labels(void);
-size_t get_model_input_num(void);
+/**
+ * @brief Check if a model is present.
+ *
+ * @return True if a model is present, False otherwise.
+ */
+bool mbml_isModelPresent(void);
+
+/**
+ * @brief Get the input length of the model.
+ *
+ * @return The number of input elements required for the model.
+ */
+size_t mbml_getInputLen(void);
+
+/**
+ * @brief Get the model labels.
+ *
+ * The label pointers point directly to the strings stored in flash.
+ *
+ * @return A pointer to a ml_labels_t object containing the labels.
+ */
+ml_labels_t* mbml_getLabels(void);
+
+/**
+ * @brief Run the model inference and return the output predictions.
+ *
+ * @param input The input data for the model.
+ * @return A pointer to a ml_prediction_t object containing the predictions.
+ */
 ml_prediction_t* model_predict(const float *input);

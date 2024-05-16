@@ -1,22 +1,20 @@
 #include <py/runtime.h>
 #include "mlmodel.h"
 
-mp_obj_t internal_model_func(size_t n_args, const mp_obj_t *args) {
-    if (n_args == 1) {
-        bool use_internal_model = !!mp_obj_get_int(args[0]);
-        set_use_built_in_model(use_internal_model);
-    }
-    return mp_obj_new_bool(get_use_built_in_model());
+mp_obj_t internal_model_func(mp_obj_t use_internal) {
+    bool use_internal_model = !!mp_obj_get_int(use_internal);
+    mbml_useBuiltInModel(use_internal_model);
+    return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_VAR(internal_model_func_obj, 0, internal_model_func);
+static MP_DEFINE_CONST_FUN_OBJ_1(internal_model_func_obj, internal_model_func);
 
 mp_obj_t get_input_length_func(void) {
-    return mp_obj_new_int(get_input_length());
+    return mp_obj_new_int(mbml_getInputLen());
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(get_input_length_func_obj, get_input_length_func);
 
 mp_obj_t get_labels_func(void) {
-    ml_labels_t* labels = get_model_labels();
+    ml_labels_t* labels = mbml_getLabels();
     if (labels == NULL) {
         return mp_const_none;
     }
@@ -42,11 +40,11 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
     mp_obj_t *input_items;
     mp_obj_list_get(x_y_z_obj, &input_len, &input_items);
 
-    if (!is_model_present()) {
+    if (!mbml_isModelPresent()) {
         mp_raise_ValueError(MP_ERROR_TEXT("Cannot find model in flash."));
     }
 
-    const size_t model_input_num = get_model_input_num();
+    const size_t model_input_num = mbml_getInputLen();
 
     if (input_len != model_input_num) {
         mp_raise_ValueError(MP_ERROR_TEXT("Input data number of elements invalid."));

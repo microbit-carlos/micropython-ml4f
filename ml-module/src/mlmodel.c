@@ -60,7 +60,7 @@ static uint32_t get_full_model_start_address() {
  */
 static ml_model_header_t* get_model_header() {
     ml_model_header_t *model_header = (ml_model_header_t *)get_full_model_start_address();
-    if (model_header->magic0 != MODEL_LABELS_MAGIC0) {
+    if (model_header->magic0 != MODEL_HEADER_MAGIC0) {
         return NULL;
     }
     // We should have at least one label
@@ -92,20 +92,16 @@ static ml4f_header_t* get_ml4f_model() {
 /*****************************************************************************/
 /* Public API                                                                */
 /*****************************************************************************/
-bool get_use_built_in_model(void) {
-    return USE_BUILT_IN;
-}
-
-void set_use_built_in_model(bool use) {
+void mbml_useBuiltInModel(bool use) {
     USE_BUILT_IN = use;
 }
 
-bool is_model_present(void) {
+bool mbml_isModelPresent(void) {
     ml_model_header_t *model_header = get_model_header();
     return model_header != NULL;
 }
 
-size_t get_input_length(void) {
+size_t mbml_getInputLen(void) {
     ml4f_header_t *ml4f_model = get_ml4f_model();
     if (ml4f_model == NULL) {
         return 0;
@@ -113,12 +109,7 @@ size_t get_input_length(void) {
     return ml4f_shape_elements(ml4f_input_shape(ml4f_model));
 }
 
-size_t get_model_label_num(void) {
-    ml_model_header_t *model_header = get_model_header();
-    return (model_header != NULL) ? model_header->number_of_labels : 0;
-}
-
-ml_labels_t* get_model_labels(void) {
+ml_labels_t* mbml_getLabels(void) {
     static ml_labels_t labels = {
         .num_labels = 0,
         .labels = NULL
@@ -194,11 +185,6 @@ ml_labels_t* get_model_labels(void) {
     return &labels;
 }
 
-size_t get_model_input_num() {
-    // TODO: Implement built-in module
-    return USE_BUILT_IN ? ml4f_model_example_input_num_elements : 0;
-}
-
 ml_prediction_t* model_predict(const float *input) {
     static ml_prediction_t predictions = {
         .max_index = 0,
@@ -207,7 +193,7 @@ ml_prediction_t* model_predict(const float *input) {
         .predictions = NULL,
     };
 
-    ml_labels_t* labels = get_model_labels();
+    ml_labels_t* labels = mbml_getLabels();
     if (labels == NULL) {
         return NULL;
     }
