@@ -2,6 +2,7 @@
  * @brief This file is based on the ML4F sample code:
  * https://github.com/microsoft/ml4f/blob/v1.9.1/sample/ml4f.h
  *
+ * @copyright
  * Sample code: Copyright (c) Microsoft Corporation.
  * Changes to the sample code: Copyright 2024 Micro:bit Educational Foundation.
  *

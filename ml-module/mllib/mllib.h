@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <ml4f.h>
+#include <stdint.h>
 
 // ASCII for "MODL"
 #define MODEL_HEADER_MAGIC0 0x4D4F444C
@@ -36,21 +36,21 @@ typedef struct ml_prediction_s {
  *
  * @param use True to use the built-in model, False to use the flash section.
  */
-void mbml_useBuiltInModel(bool use);
+void ml_useBuiltInModel(bool use);
 
 /**
  * @brief Check if a model is present.
  *
  * @return True if a model is present, False otherwise.
  */
-bool mbml_isModelPresent(void);
+bool ml_isModelPresent(void);
 
 /**
  * @brief Get the input length of the model.
  *
  * @return The number of input elements required for the model.
  */
-size_t mbml_getInputLen(void);
+size_t ml_getInputLen(void);
 
 /**
  * @brief Get the model labels.
@@ -59,7 +59,7 @@ size_t mbml_getInputLen(void);
  *
  * @return A pointer to a ml_labels_t object containing the labels.
  */
-ml_labels_t* mbml_getLabels(void);
+ml_labels_t* ml_getLabels(void);
 
 /**
  * @brief Run the model inference and return the output predictions.
@@ -67,4 +67,4 @@ ml_labels_t* mbml_getLabels(void);
  * @param input The input data for the model.
  * @return A pointer to a ml_prediction_t object containing the predictions.
  */
-ml_prediction_t* model_predict(const float *input);
+ml_prediction_t* ml_predict(const float *input);
