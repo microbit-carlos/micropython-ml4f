@@ -5,7 +5,9 @@
 #define ml4f_full_model_size            (ml4f_model_example_header_len + ml4f_model_example_size)
 
 // This is a struct representation of the header included at the beginning of model_example
-/* const ml_model_header_t ml4f_model_example_header = {
+/*
+#include <mlrunner.h>
+const ml_model_header_t ml4f_model_example_header = {
     .magic0 = MODEL_HEADER_MAGIC0,
     .header_size = 0x31,        // 49
     .model_offset = 0x34,       // 52
@@ -18,7 +20,8 @@
         "Standing\0"
         "Walking\0\0\0"
     }
-}; */
+};
+*/
 
 const unsigned int model_example[ml4f_full_model_size] = {
     // Manually converted ml4f_model_example_header

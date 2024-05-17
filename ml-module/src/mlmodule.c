@@ -1,5 +1,5 @@
 #include <py/runtime.h>
-#include <mllib.h>
+#include <mlrunner.h>
 
 mp_obj_t internal_model_func(mp_obj_t use_internal) {
     bool use_internal_model = !!mp_obj_get_int(use_internal);

@@ -4,8 +4,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+namespace mlrunner {
+extern "C" {
+#endif
+
 // ASCII for "MODL"
-#define MODEL_HEADER_MAGIC0 0x4D4F444C
+const uint32_t MODEL_HEADER_MAGIC0 = 0x4D4F444C;
 
 typedef struct ml_model_header_t {
     uint32_t magic0;
@@ -68,3 +73,8 @@ ml_labels_t* ml_getLabels(void);
  * @return A pointer to a ml_prediction_t object containing the predictions.
  */
 ml_prediction_t* ml_predict(const float *input);
+
+#ifdef __cplusplus
+}  // extern "C"
+}  // namespace mlrunner
+#endif

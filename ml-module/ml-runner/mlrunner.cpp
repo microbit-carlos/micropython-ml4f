@@ -11,9 +11,11 @@
  * We call the "full model" the labels header + the ML4F model.
  */
 #include <stdlib.h>
-#include <model_example.h>
+#include "model-example/model_example.h"
 #include "ml4f/ml4f.h"
-#include "mllib.h"
+#include "mlrunner.h"
+
+using namespace mlrunner;
 
 // Linker symbols used to find the start of the model in flash.
 extern uint8_t  __etext, __data_start__, __data_end__;
@@ -90,16 +92,16 @@ static ml4f_header_t* get_ml4f_model() {
 /*****************************************************************************/
 /* Public API                                                                */
 /*****************************************************************************/
-void ml_useBuiltInModel(bool use) {
+void mlrunner::ml_useBuiltInModel(bool use) {
     USE_BUILT_IN = use;
 }
 
-bool ml_isModelPresent(void) {
+bool mlrunner::ml_isModelPresent() {
     ml_model_header_t *model_header = get_model_header();
     return model_header != NULL;
 }
 
-size_t ml_getInputLen(void) {
+size_t mlrunner::ml_getInputLen() {
     ml4f_header_t *ml4f_model = get_ml4f_model();
     if (ml4f_model == NULL) {
         return 0;
@@ -107,7 +109,7 @@ size_t ml_getInputLen(void) {
     return ml4f_shape_elements(ml4f_input_shape(ml4f_model));
 }
 
-ml_labels_t* ml_getLabels(void) {
+ml_labels_t* mlrunner::ml_getLabels() {
     static ml_labels_t labels = {
         .num_labels = 0,
         .labels = NULL
@@ -156,7 +158,7 @@ ml_labels_t* ml_getLabels(void) {
     } else if (labels.num_labels != model_header->number_of_labels) {
         set_labels = true;
     } else {
-        for (int i = 0; i < labels.num_labels; i++) {
+        for (size_t i = 0; i < labels.num_labels; i++) {
             if (labels.labels[i] != flash_labels[i]) {
                 set_labels = true;
                 break;
@@ -175,7 +177,7 @@ ml_labels_t* ml_getLabels(void) {
             return NULL;
         }
         labels.num_labels = model_header->number_of_labels;
-        for (int i = 0; i < labels.num_labels; i++) {
+        for (size_t i = 0; i < labels.num_labels; i++) {
             labels.labels[i] = flash_labels[i];
         }
     }
@@ -183,7 +185,7 @@ ml_labels_t* ml_getLabels(void) {
     return &labels;
 }
 
-ml_prediction_t* ml_predict(const float *input) {
+ml_prediction_t* mlrunner::ml_predict(const float *input) {
     static ml_prediction_t predictions = {
         .max_index = 0,
         .num_labels = 0,
