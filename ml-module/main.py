@@ -3,11 +3,11 @@ import time
 
 import ml
 
+print("Input size: {}".format(ml.get_input_length()))
+print("Model labels: {}".format(ml.get_labels()))
+
 TOTAL_SAMPLES = ml.get_input_length()
 acc_x_y_z = [0] * TOTAL_SAMPLES
-
-print("Model labels: {}".format(ml.get_labels()))
-print("Input size: {}".format(TOTAL_SAMPLES))
 
 i = 0
 while True:
@@ -26,12 +26,4 @@ while True:
         else:
             print("t[{}] {}".format(time.ticks_ms() - t, result))
         i = 0
-    if button_a.is_pressed():
-        print("Use build-in model")
-        ml.internal_model(True)
-        sleep(500)
-    if button_b.is_pressed():
-        print("Use flash model")
-        ml.internal_model(False)
-        sleep(500)
     sleep(20)

@@ -1,3 +1,6 @@
 [submodule "micropython-microbit-v2"]
 	path = micropython-microbit-v2
 	url = https://github.com/microbit-foundation/micropython-microbit-v2.git
+[submodule "ml-module/pxt-ml-runner-poc"]
+	path = ml-module/pxt-ml-runner-poc
+	url = https://github.com/microbit-foundation/pxt-ml-runner-poc.git

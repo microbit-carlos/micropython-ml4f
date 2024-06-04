@@ -1,15 +1,8 @@
 #include <py/runtime.h>
-#include <mlrunner.h>
-
-mp_obj_t internal_model_func(mp_obj_t use_internal) {
-    bool use_internal_model = !!mp_obj_get_int(use_internal);
-    ml_useBuiltInModel(use_internal_model);
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_1(internal_model_func_obj, internal_model_func);
+#include "mlinterface.h"
 
 mp_obj_t get_input_length_func(void) {
-    return mp_obj_new_int(ml_getInputLen());
+    return mp_obj_new_int(ml_getInputLength());
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(get_input_length_func_obj, get_input_length_func);
 
@@ -44,7 +37,7 @@ mp_obj_t predict_func(mp_obj_t x_y_z_obj) {
         mp_raise_ValueError(MP_ERROR_TEXT("Cannot find model in flash."));
     }
 
-    const size_t model_input_num = ml_getInputLen();
+    const size_t model_input_num = ml_getInputLength();
 
     if (input_len != model_input_num) {
         mp_raise_ValueError(MP_ERROR_TEXT("Input data number of elements invalid."));
@@ -88,11 +81,21 @@ MP_REGISTER_ROOT_POINTER(int ml_initialised);
 static mp_obj_t ml___init__(void) {
     if (!MP_STATE_VM(ml_initialised)) {
         // __init__ for builtins is called each time the module is imported,
-        //   so ensure that initialisation only happens once.
+        //   so ensure that initialisation only happens once
         MP_STATE_VM(ml_initialised) = true;
-        mp_printf(&mp_plat_print, "ml.__init_ called\n");
+        DEBUG_PRINT("ml.__init_ called\n");
+
+        // Set the model to use for inference
+        bool success = ml_loadModel();
+        if (!success) {
+            DEBUG_PRINT("Failed to load model\n");
+        } else {
+            DEBUG_PRINT("Model successfully loaded\n");
+        }
     } else {
-        mp_printf(&mp_plat_print, "ml.__init_ already initialised\n");
+        DEBUG_PRINT("ml.__init_ already initialised\n");
+        bool model_loaded = ml_isModelPresent();
+        DEBUG_PRINT("Model %s loaded\n", model_loaded ? "already" : "not");
     }
     return mp_const_none;
 }
@@ -107,7 +110,6 @@ static MP_DEFINE_CONST_FUN_OBJ_0(ml___init___obj, ml___init__);
 static const mp_rom_map_elem_t ml_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ml) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&ml___init___obj) },
-    { MP_ROM_QSTR(MP_QSTR_internal_model), MP_ROM_PTR(&internal_model_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_input_length), MP_ROM_PTR(&get_input_length_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_labels), MP_ROM_PTR(&get_labels_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_predict), MP_ROM_PTR(&predict_func_obj) },
