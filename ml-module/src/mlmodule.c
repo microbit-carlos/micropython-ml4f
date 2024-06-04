@@ -107,20 +107,20 @@ static MP_DEFINE_CONST_FUN_OBJ_0(ml___init___obj, ml___init__);
 // and the MicroPython object reference.
 // All identifiers and strings are written as MP_QSTR_xxx and will be
 // optimized to word-sized integers by the build system (interned strings).
-static const mp_rom_map_elem_t ml_module_globals_table[] = {
+static const mp_rom_map_elem_t ml_runner_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ml) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&ml___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_get_input_length), MP_ROM_PTR(&get_input_length_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_labels), MP_ROM_PTR(&get_labels_func_obj) },
     { MP_ROM_QSTR(MP_QSTR_predict), MP_ROM_PTR(&predict_func_obj) },
 };
-static MP_DEFINE_CONST_DICT(ml_module_globals, ml_module_globals_table);
+static MP_DEFINE_CONST_DICT(ml_runner_module_globals, ml_runner_module_globals_table);
 
 // Define module object.
-const mp_obj_module_t ml_cmodule = {
+const mp_obj_module_t ml_runner_cmodule = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&ml_module_globals,
+    .globals = (mp_obj_dict_t *)&ml_runner_module_globals,
 };
 
 // Register the module to make it available in Python.
-MP_REGISTER_MODULE(MP_QSTR_ml, ml_cmodule);
+MP_REGISTER_MODULE(MP_QSTR_ml_runner, ml_runner_cmodule);

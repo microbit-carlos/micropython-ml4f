@@ -3,27 +3,27 @@ import time
 
 import ml
 
-print("Input size: {}".format(ml.get_input_length()))
-print("Model labels: {}".format(ml.get_labels()))
+ml.start()
+labels = ml.get_labels()
 
-TOTAL_SAMPLES = ml.get_input_length()
-acc_x_y_z = [0] * TOTAL_SAMPLES
-
-i = 0
 while True:
-    acc_x_y_z[i + 0] = accelerometer.get_x()
-    acc_x_y_z[i + 1] = accelerometer.get_y()
-    acc_x_y_z[i + 2] = accelerometer.get_z()
-    i += 3
-    if i >= TOTAL_SAMPLES:
-        t = time.ticks_ms()
-        result = ml.predict(acc_x_y_z)
-        if result:
-            print("t[{}] {:8s}".format(time.ticks_ms() - t, result[1][result[0]][0]), end="")
-            for label_pred in result[1]:
-                print(" {}[{:.2f}]".format(label_pred[0][:1], label_pred[1]), end="")
-            print()
+    gesture = ml.get_result()
+    if gesture == "Jumping":
+        display.show("J")
+    if gesture == "Running":
+        display.show("R")
+    if gesture == "Walking":
+        display.show("W")
+    if gesture == "Standing":
+        display.show("S")
+
+    if button_a.is_pressed():
+        if ml.is_running():
+            ml.end()
         else:
-            print("t[{}] {}".format(time.ticks_ms() - t, result))
-        i = 0
-    sleep(20)
+            ml.start()
+
+    if button_b.is_pressed():
+        display.clear()
+
+    sleep(100)
